@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2F9FD1">
+<title>Mercadinho dos Números</title>
+<style>
+  :root{
+    --bg:#EAF6FB;
+    --wood:#8B5E34;
+    --wood-dark:#6B4423;
+    --ink:#3A2E22;
+    --lemon:#F4B400;    --lemon-dark:#C98F00;
+    --leaf:#3FA34D;     --leaf-dark:#2C7A38;
+    --sky:#2F9FD1;      --sky-dark:#1F76A3;
+    --tomato:#E8543E;   --tomato-dark:#C03B28;
+    --plum:#8E5572;     --plum-dark:#6E3F58;
+    --gold:#F4B400;     --gold-dark:#C98F00;
+    --radius-lg:26px;
+    --radius-md:18px;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(#BFEFFF,#EAF6FB);
+    color:var(--ink);
+    min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;}
+  button:focus-visible, .parent-link:focus-visible{outline:3px solid var(--ink);outline-offset:2px;}
+
+  #app-shell{
+    max-width:480px;margin:0 auto;min-height:100dvh;background:var(--bg);
+    position:relative;box-shadow:0 0 40px rgba(0,0,0,0.10);
+    padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);
+    padding-bottom:calc(48px + env(safe-area-inset-bottom));
+  }
+
+  /* ---------- color tokens per activity ---------- */
+  .stall--lemon, .activity-header--lemon, .btn--lemon{--accent:var(--lemon);--accent-dark:var(--lemon-dark);}
+  .stall--leaf, .activity-header--leaf, .btn--leaf{--accent:var(--leaf);--accent-dark:var(--leaf-dark);}
+  .stall--sky, .activity-header--sky, .btn--sky{--accent:var(--sky);--accent-dark:var(--sky-dark);}
+  .stall--tomato, .activity-header--tomato, .btn--tomato{--accent:var(--tomato);--accent-dark:var(--tomato-dark);}
+  .stall--plum, .activity-header--plum, .btn--plum{--accent:var(--plum);--accent-dark:var(--plum-dark);}
+  .stall--gold, .activity-header--gold, .btn--gold{--accent:var(--gold);--accent-dark:var(--gold-dark);}
+
+  /* ---------- home screen ---------- */
+  .home-screen{padding-top:max(6px, env(safe-area-inset-top));}
+  .market-sign{
+    position:relative;background:var(--wood);border-radius:var(--radius-lg);
+    padding:34px 20px 26px;text-align:center;margin:20px 20px 26px;
+    box-shadow:0 8px 0 var(--wood-dark);
+  }
+  .sign-bolt{position:absolute;top:-9px;width:16px;height:16px;background:var(--wood-dark);border-radius:50%;}
+  .sign-bolt--l{left:26px;} .sign-bolt--r{right:26px;}
+  .mascot{font-size:60px;display:inline-block;animation:bounceIn .7s ease;}
+  .market-sign h1{color:#fff;font-size:clamp(26px,8vw,34px);margin:8px 0 4px;line-height:1.15;
+    text-shadow:0 2px 0 rgba(0,0,0,0.25);font-weight:900;}
+  .tagline{color:#FFE9B8;font-size:16px;margin:0;font-weight:700;}
+
+  .stalls{display:flex;flex-direction:column;gap:16px;padding:0 20px;}
+  .stall{
+    border:none;text-align:left;display:flex;align-items:center;gap:16px;width:100%;
+    padding:20px 22px;border-radius:var(--radius-md);background:var(--accent);
+    box-shadow:0 6px 0 var(--accent-dark);color:#fff;font-weight:800;font-size:21px;
+    font-family:inherit;cursor:pointer;transition:transform .08s,box-shadow .08s;
+  }
+  .stall:active{transform:translateY(4px);box-shadow:0 2px 0 var(--accent-dark);}
+  .stall-icon{font-size:32px;line-height:1;}
+
+  .parent-link{
+    display:block;margin:22px auto 4px;background:none;border:none;color:var(--wood-dark);
+    text-decoration:underline;font-size:15px;font-weight:700;padding:12px;cursor:pointer;
+  }
+
+  /* ---------- activity header ---------- */
+  .activity-header{
+    position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+    gap:8px;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;background:var(--accent);color:#fff;
+  }
+  .activity-title{font-size:18px;font-weight:800;text-align:center;flex:1;}
+  .icon-btn{
+    background:rgba(255,255,255,0.28);border:none;color:#fff;width:44px;height:44px;
+    border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+  }
+
+  .level-row{display:flex;gap:10px;justify-content:center;padding:16px 16px 0;flex-wrap:wrap;}
+  .pill{
+    padding:10px 18px;border-radius:999px;border:2px solid var(--wood);background:#fff;
+    color:var(--wood-dark);font-weight:800;font-size:15px;cursor:pointer;min-height:44px;
+  }
+  .pill--active{background:var(--wood);color:#fff;}
+
+  .body-pad{padding:18px 20px 8px;}
+  .prompt{font-size:20px;font-weight:800;text-align:center;margin:18px 0;}
+
+  /* ---------- crates / items ---------- */
+  .crate{
+    background:#F3E4C8;border:5px solid var(--wood);border-radius:20px;padding:16px;
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;min-height:96px;
+  }
+  .crate--sm{min-height:80px;padding:12px;flex:1;}
+  .item{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;font-size:25px;}
+  .item--sm{width:28px;height:28px;font-size:21px;}
+
+  .soma-row{display:flex;align-items:center;justify-content:center;gap:12px;}
+  .op{font-size:32px;font-weight:900;color:var(--wood);flex-shrink:0;}
+
+  /* ---------- answer options ---------- */
+  .options-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:22px;transition:opacity .2s;}
+  .options-row.locked{opacity:.6;pointer-events:none;}
+  .option-btn{
+    border:none;min-width:82px;min-height:82px;font-size:32px;font-weight:900;color:#fff;
+    background:var(--accent);box-shadow:0 6px 0 var(--accent-dark);border-radius:20px;
+    cursor:pointer;font-family:inherit;transition:transform .08s,box-shadow .08s;
+  }
+  .option-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--accent-dark);}
+
+  /* ---------- price tags (ordering game) ---------- */
+  .tags-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:20px;justify-items:center;
+    margin-top:22px;max-width:280px;margin-left:auto;margin-right:auto;transition:opacity .2s;
+  }
+  .tags-grid.locked{opacity:.6;pointer-events:none;}
+  .price-tag{
+    position:relative;width:104px;height:104px;border:none;border-radius:18px;
+    background:var(--accent);box-shadow:0 6px 0 var(--accent-dark);color:#fff;
+    font-size:30px;font-weight:900;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s,opacity .2s;
+  }
+  .price-tag:active{transform:translateY(4px);box-shadow:0 2px 0 var(--accent-dark);}
+  .price-tag::before{
+    content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+    width:14px;height:14px;background:#fff;border:3px solid var(--accent-dark);border-radius:50%;
+  }
+  .price-tag.tag-done{opacity:.55;box-shadow:0 2px 0 var(--accent-dark);}
+  .tag-badge{
+    position:absolute;bottom:-10px;right:-10px;background:#fff;color:var(--ink);
+    font-size:13px;font-weight:900;border-radius:999px;padding:3px 7px;box-shadow:0 2px 4px rgba(0,0,0,0.25);
+  }
+
+  /* ---------- parity (par/impar) ---------- */
+  .coin-grid{
+    display:grid;grid-template-columns:repeat(2,56px);justify-content:center;gap:10px 26px;
+    background:#F3E4C8;border:5px solid var(--wood);border-radius:20px;padding:18px 10px;
+  }
+  .coin{font-size:32px;text-align:center;}
+  .parity-row{display:flex;gap:16px;justify-content:center;margin-top:22px;transition:opacity .2s;}
+  .parity-row.locked{opacity:.6;pointer-events:none;}
+  .parity-btn{
+    border:none;flex:1;max-width:150px;min-height:110px;border-radius:20px;color:#fff;
+    font-family:inherit;font-weight:900;font-size:18px;cursor:pointer;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    transition:transform .08s,box-shadow .08s;
+  }
+  .parity-btn--par{background:var(--leaf);box-shadow:0 6px 0 var(--leaf-dark);}
+  .parity-btn--impar{background:var(--tomato);box-shadow:0 6px 0 var(--tomato-dark);}
+  .parity-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.3);}
+  .parity-icon{font-size:26px;}
+
+  /* ---------- hint glow ---------- */
+  .hint-glow{animation:pulseGlow 1s ease-in-out infinite;}
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:0 6px 0 var(--accent-dark),0 0 0 0 rgba(255,255,255,0.0);}
+    50%{box-shadow:0 6px 0 var(--accent-dark),0 0 0 10px rgba(255,255,255,0.45);}
+  }
+  .parity-btn.hint-glow.parity-btn--par{animation-name:pulseGlowLeaf;}
+  .parity-btn.hint-glow.parity-btn--impar{animation-name:pulseGlowTomato;}
+  @keyframes pulseGlowLeaf{0%,100%{box-shadow:0 6px 0 var(--leaf-dark),0 0 0 0 rgba(255,255,255,0);}50%{box-shadow:0 6px 0 var(--leaf-dark),0 0 0 10px rgba(255,255,255,0.45);}}
+  @keyframes pulseGlowTomato{0%,100%{box-shadow:0 6px 0 var(--tomato-dark),0 0 0 0 rgba(255,255,255,0);}50%{box-shadow:0 6px 0 var(--tomato-dark),0 0 0 10px rgba(255,255,255,0.45);}}
+
+  /* ---------- estrelas screen ---------- */
+  .total-medal{
+    width:150px;height:150px;border-radius:50%;background:var(--gold);color:#fff;margin:20px auto;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:36px;font-weight:900;box-shadow:0 8px 0 var(--gold-dark);line-height:1.1;
+  }
+  .total-label{font-size:15px;font-weight:700;}
+  .stars-list{display:flex;flex-direction:column;gap:12px;padding:4px 4px 20px;}
+  .star-row{
+    display:flex;align-items:center;gap:12px;background:#fff;border:3px solid var(--wood);
+    border-radius:16px;padding:14px 16px;
+  }
+  .star-row-icon{font-size:26px;}
+  .star-row-label{flex:1;font-weight:800;font-size:16px;}
+  .star-row-count{font-weight:900;font-size:16px;color:var(--wood-dark);}
+
+  /* ---------- feedback banner ---------- */
+  .banner{
+    position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,140%);min-width:220px;max-width:88%;
+    text-align:center;padding:14px 22px;border-radius:999px;font-weight:800;font-size:17px;color:#fff;
+    box-shadow:0 6px 16px rgba(0,0,0,0.28);transition:transform .25s ease;z-index:900;pointer-events:none;
+  }
+  .banner.show{transform:translate(-50%,0);}
+  .banner--success{background:var(--leaf);}
+  .banner--retry{background:var(--tomato);}
+
+  /* ---------- fx particles ---------- */
+  #fx-layer{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;}
+  .fx-particle{
+    position:fixed;font-size:28px;transform:translate(-50%,-50%);opacity:1;
+    animation:fxfly .9s ease-out forwards;
+  }
+  @keyframes fxfly{to{transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));opacity:0;}}
+
+  /* ---------- parent modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;
+    justify-content:center;padding:20px;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:auto;}
+  .modal-card{
+    background:#fff;border-radius:24px;max-width:420px;width:100%;max-height:82vh;overflow-y:auto;
+    padding:26px 22px 20px;position:relative;box-shadow:0 10px 0 rgba(0,0,0,0.15);
+  }
+  .modal-close{
+    position:absolute;top:14px;right:14px;background:var(--tomato);color:#fff;border:none;
+    width:36px;height:36px;border-radius:50%;font-size:17px;font-weight:900;cursor:pointer;
+  }
+  .modal-body h2{margin:0 0 14px;font-size:22px;}
+  .modal-body p, .modal-body li{font-size:15.5px;line-height:1.6;color:var(--ink);}
+  .modal-body ul{padding-left:20px;margin:0 0 14px;}
+  .modal-body li{margin-bottom:10px;}
+
+  @keyframes bounceIn{
+    0%{transform:scale(0.3) translateY(-20px);opacity:0;}
+    60%{transform:scale(1.15) translateY(4px);opacity:1;}
+    100%{transform:scale(1) translateY(0);}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important;animation-iteration-count:1 !important;transition-duration:0.001ms !important;}
+  }
+</style>
+</head>
+<body>
+  <div id="app-shell">
+    <div id="app"></div>
+  </div>
+
+  <div id="fx-layer"></div>
+  <div id="feedback-banner" class="banner"></div>
+
+  <div id="parent-modal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" data-action="close-parent-info" aria-label="Fechar">✕</button>
+      <div class="modal-body">
+        <h2>Para os pais 💛</h2>
+        <p>Este site foi pensado como um caderninho do Kumon: passos pequenos, muita repetição e sempre no contexto de compras e dinheiro, que é concreto e fácil de visualizar para uma criança de 6 anos.</p>
+        <ul>
+          <li><strong>O que ela pratica aqui:</strong> reconhecer números de 1 a 30 (com foco especial de 11 a 30), contar em ordem crescente e decrescente, somas simples e a ideia de par e ímpar.</li>
+          <li><strong>Sessões curtas:</strong> 10 a 15 minutos por vez, uma ou duas vezes ao dia, é melhor do que uma sessão longa. Pare antes que ela se canse.</li>
+          <li><strong>Deixe ela tentar:</strong> se errar, o site pede para tentar de novo. Depois de duas tentativas erradas, a resposta certa começa a brilhar como uma dica gentil.</li>
+          <li><strong>Comemore o esforço:</strong> mais importante que acertar de primeira é ela continuar tentando. Vibre junto quando aparecerem as estrelinhas.</li>
+          <li><strong>Sente-se com ela</strong> nas primeiras vezes para ler os textos das telas, já que ela ainda está aprendendo a ler.</li>
+          <li><strong>Se ela travar</strong> em números grandes, use os botõezinhos de nível para voltar para números menores (1 a 10) antes de tentar de novo os maiores.</li>
+          <li>As estrelinhas aparecem na tela "Minhas Estrelas" durante a sessão de estudo. Se fechar a página e abrir de novo, elas voltam a zero — é só para comemorar o progresso do dia, sem precisar de conta ou login.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= data ================= */
+  var ACTIVITY_META = {
+    numeros:     {icon:"🔢", label:"Números",         color:"lemon"},
+    crescente:   {icon:"📈", label:"Ordem Crescente",  color:"leaf"},
+    decrescente: {icon:"📉", label:"Ordem Decrescente",color:"sky"},
+    soma:        {icon:"➕", label:"Soma",             color:"tomato"},
+    paridade:    {icon:"🪙", label:"Par ou Ímpar",     color:"plum"},
+    estrelas:    {icon:"⭐", label:"Minhas Estrelas",  color:"gold"}
+  };
+
+  var ITEM_EMOJIS = ["🍎","🍌","🍇","🍓","🥕","🍪","🧦","🎈","🧃","🍫"];
+  var PRAISE = ["Isso mesmo! 🎉","Muito bem! ⭐","Você conseguiu! 🥳","Perfeito! 👏","Arrasou! 🌟","Show de bola! 🎈"];
+  var ENCOURAGE = ["Quase! Tenta de novo 💪","Vamos tentar outra vez 😊","Você consegue, tenta de novo 🙂","Foi quase! 💛"];
+
+  var state = {
+    screen:"home",
+    sound:true,
+    progress:{numeros:0, crescente:0, decrescente:0, soma:0, paridade:0},
+    numeros:    {level:1, question:null},
+    crescente:  {range:"small", question:null},
+    decrescente:{range:"small", question:null},
+    soma:       {level:1, question:null},
+    paridade:   {range:"small", question:null}
+  };
+
+  /* ================= helpers ================= */
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function pick(arr){ return arr[randInt(0,arr.length-1)]; }
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = randInt(0,i);
+      var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+    }
+    return a;
+  }
+  function uniqueOptions(correct, min, max, count){
+    min = Math.max(1, min);
+    if(max < min + count) max = min + count + 3;
+    var set = {}; var found=[];
+    var guard = 0;
+    while(found.length < count && guard < 400){
+      var cand = randInt(min,max);
+      if(cand !== correct && !set[cand]){ set[cand]=true; found.push(cand); }
+      guard++;
+    }
+    return shuffle([correct].concat(found));
+  }
+  function reduceMotion(){
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function repeat(n, fn){
+    var out = "";
+    for(var i=0;i<n;i++){ out += fn(i); }
+    return out;
+  }
+
+  /* ================= question generators ================= */
+  function generateNumeros(level){
+    var ranges = {1:[1,10], 2:[11,20], 3:[21,30]};
+    var r = ranges[level] || ranges[1];
+    var target = randInt(r[0], r[1]);
+    var emoji = pick(ITEM_EMOJIS);
+    var options = uniqueOptions(target, target-4, target+4, 2);
+    return {target:target, emoji:emoji, options:options, wrongAttempts:0, locked:false};
+  }
+
+  function generateOrder(range, direction){
+    var r = range === "big" ? [11,30] : [1,10];
+    var set = {}; var nums = [];
+    var guard = 0;
+    while(nums.length < 4 && guard < 400){
+      var cand = randInt(r[0], r[1]);
+      if(!set[cand]){ set[cand]=true; nums.push(cand); }
+      guard++;
+    }
+    var display = shuffle(nums);
+    var solution = nums.slice().sort(function(a,b){ return direction==="asc" ? a-b : b-a; });
+    return {display:display, solution:solution, doneCount:0, wrongAttempts:0, locked:false};
+  }
+
+  function generateSoma(level){
+    var minA = level===2 ? 4 : 1;
+    var maxA = level===2 ? 12 : 5;
+    var a = randInt(minA,maxA);
+    var b = randInt(minA,maxA);
+    var sum = a+b;
+    var emojiA = pick(ITEM_EMOJIS);
+    var emojiB = pick(ITEM_EMOJIS);
+    var guard=0;
+    while(emojiB===emojiA && guard<10){ emojiB = pick(ITEM_EMOJIS); guard++; }
+    var options = uniqueOptions(sum, sum-4, sum+4, 2);
+    return {a:a,b:b,sum:sum,emojiA:emojiA,emojiB:emojiB,options:options,wrongAttempts:0, locked:false};
+  }
+
+  function generateParidade(range){
+    var r = range === "big" ? [11,30] : [1,10];
+    var n = randInt(r[0], r[1]);
+    return {n:n, isEven:(n%2===0), wrongAttempts:0, locked:false};
+  }
+
+  function generateFor(act){
+    if(act==="numeros") return generateNumeros(state.numeros.level);
+    if(act==="crescente") return generateOrder(state.crescente.range, "asc");
+    if(act==="decrescente") return generateOrder(state.decrescente.range, "desc");
+    if(act==="soma") return generateSoma(state.soma.level);
+    if(act==="paridade") return generateParidade(state.paridade.range);
+    return null;
+  }
+
+  /* ================= sound ================= */
+  var audioCtx = null;
+  function ensureAudio(){
+    if(!state.sound) return null;
+    try{
+      if(!audioCtx){
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if(!Ctx) return null;
+        audioCtx = new Ctx();
+      }
+      if(audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }catch(e){ return null; }
+  }
+  function tone(freq, dur, delay, vol){
+    var ctx = ensureAudio();
+    if(!ctx) return;
+    delay = delay || 0; vol = vol || 0.15;
+    try{
+      var t0 = ctx.currentTime + delay;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol, t0+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0+dur+0.03);
+    }catch(e){}
+  }
+  function playSuccess(){ tone(523.25,0.16,0); tone(659.25,0.18,0.12); tone(783.99,0.24,0.26); }
+  function playTick(){ tone(440,0.12,0,0.12); }
+  function playRetry(){ tone(220,0.28,0,0.10); }
+
+  /* ================= progress (contado durante a visita, sem precisar de conta) ================= */
+  function bumpProgress(act){
+    state.progress[act] = (state.progress[act]||0) + 1;
+  }
+
+  /* ================= feedback fx ================= */
+  var bannerTimeout;
+  function showBanner(type, text){
+    var b = document.getElementById("feedback-banner");
+    b.textContent = text;
+    b.className = "banner show banner--" + type;
+    clearTimeout(bannerTimeout);
+    bannerTimeout = setTimeout(function(){
+      b.className = "banner banner--" + type;
+    }, 1400);
+  }
+  function celebrate(x, y){
+    if(reduceMotion()) return;
+    var layer = document.getElementById("fx-layer");
+    var emojis = ["⭐","✨","🌟","🪙"];
+    var cx = (typeof x === "number") ? x : window.innerWidth/2;
+    var cy = (typeof y === "number") ? y : window.innerHeight/2;
+    for(var i=0;i<10;i++){
+      (function(){
+        var s = document.createElement("span");
+        s.className = "fx-particle";
+        s.textContent = emojis[randInt(0,emojis.length-1)];
+        var angle = Math.random()*Math.PI*2;
+        var dist = 60 + Math.random()*70;
+        var dx = Math.cos(angle)*dist;
+        var dy = Math.sin(angle)*dist - 40;
+        s.style.left = cx+"px";
+        s.style.top = cy+"px";
+        s.style.setProperty("--dx", dx+"px");
+        s.style.setProperty("--dy", dy+"px");
+        layer.appendChild(s);
+        setTimeout(function(){ s.remove(); }, 900);
+      })();
+    }
+  }
+
+  /* ================= render: home ================= */
+  function stallBtn(act){
+    var m = ACTIVITY_META[act];
+    return '<button class="stall stall--'+m.color+'" data-action="go-activity" data-activity="'+act+'">'+
+      '<span class="stall-icon">'+m.icon+'</span>'+
+      '<span class="stall-label">'+m.label+'</span>'+
+      '</button>';
+  }
+  function renderHome(){
+    return (
+      '<div class="home-screen">'+
+        '<div class="market-sign">'+
+          '<div class="sign-bolt sign-bolt--l"></div>'+
+          '<div class="sign-bolt sign-bolt--r"></div>'+
+          '<div class="mascot">🛒</div>'+
+          '<h1>Mercadinho<br>dos Números</h1>'+
+          '<p class="tagline">Vem comprar e aprender!</p>'+
+        '</div>'+
+        '<div class="stalls">'+
+          stallBtn("numeros")+
+          stallBtn("crescente")+
+          stallBtn("decrescente")+
+          stallBtn("soma")+
+          stallBtn("paridade")+
+          stallBtn("estrelas")+
+        '</div>'+
+        '<button class="parent-link" data-action="open-parent-info">Para os pais</button>'+
+      '</div>'
+    );
+  }
+
+  /* ================= render: shared header ================= */
+  function headerHTML(act){
+    var m = ACTIVITY_META[act];
+    return (
+      '<div class="activity-header activity-header--'+m.color+'">'+
+        '<button class="icon-btn" data-action="go-home" aria-label="Início">🏠</button>'+
+        '<div class="activity-title">'+m.icon+' '+m.label+'</div>'+
+        '<button class="icon-btn" data-action="toggle-sound" aria-label="Som">'+(state.sound?"🔊":"🔇")+'</button>'+
+      '</div>'
+    );
+  }
+
+  /* ================= render: numeros ================= */
+  function renderNumeros(){
+    var st = state.numeros;
+    if(!st.question) st.question = generateFor("numeros");
+    var q = st.question;
+    var itemsHTML = repeat(q.target, function(){ return '<span class="item">'+q.emoji+'</span>'; });
+    var levels = [[1,"1–10"],[2,"11–20"],[3,"21–30"]];
+    var pills = levels.map(function(pair){
+      var lvl = pair[0], label = pair[1];
+      return '<button class="pill '+(st.level===lvl?"pill--active":"")+'" data-action="select-level" data-activity="numeros" data-level="'+lvl+'">'+label+'</button>';
+    }).join("");
+    var optionsHTML = q.options.map(function(v){
+      var hint = (q.wrongAttempts>=2 && v===q.target) ? "hint-glow" : "";
+      return '<button class="option-btn btn--lemon '+hint+'" data-action="answer" data-activity="numeros" data-value="'+v+'">'+v+'</button>';
+    }).join("");
+    return (
+      headerHTML("numeros")+
+      '<div class="level-row">'+pills+'</div>'+
+      '<div class="body-pad">'+
+        '<div class="crate">'+itemsHTML+'</div>'+
+        '<p class="prompt">Quantos tem na cesta?</p>'+
+        '<div class="options-row '+(q.locked?"locked":"")+'">'+optionsHTML+'</div>'+
+      '</div>'
+    );
+  }
+
+  /* ================= render: ordem (crescente / decrescente) ================= */
+  function renderOrder(act, promptText){
+    var st = state[act];
+    if(!st.question) st.question = generateFor(act);
+    var q = st.question;
+    var rangeBtns = [["small","1–10"],["big","11–30"]].map(function(pair){
+      var r = pair[0], label = pair[1];
+      return '<button class="pill '+(st.range===r?"pill--active":"")+'" data-action="select-range" data-activity="'+act+'" data-range="'+r+'">'+label+'</button>';
+    }).join("");
+    var nextExpected = q.solution[q.doneCount];
+    var tilesHTML = q.display.map(function(val){
+      var solIndex = q.solution.indexOf(val);
+      var isDone = solIndex < q.doneCount;
+      var isHint = (!isDone && q.wrongAttempts>=2 && val===nextExpected);
+      var badge = isDone ? '<span class="tag-badge">'+(solIndex+1)+'º</span>' : "";
+      var colorClass = act==="crescente" ? "btn--leaf" : "btn--sky";
+      return '<button class="price-tag '+colorClass+' '+(isDone?"tag-done":"")+' '+(isHint?"hint-glow":"")+'" '+
+        (isDone?"disabled":"")+' data-action="tag" data-activity="'+act+'" data-value="'+val+'">'+
+        '<span class="tag-value">'+val+'</span>'+badge+
+        '</button>';
+    }).join("");
+    return (
+      headerHTML(act)+
+      '<div class="level-row">'+rangeBtns+'</div>'+
+      '<div class="body-pad">'+
+        '<p class="prompt">'+promptText+'</p>'+
+        '<div class="tags-grid '+(q.locked?"locked":"")+'">'+tilesHTML+'</div>'+
+      '</div>'
+    );
+  }
+  function renderCrescente(){ return renderOrder("crescente", "Toque do menor ao maior 👉"); }
+  function renderDecrescente(){ return renderOrder("decrescente", "Toque do maior ao menor 👉"); }
+
+  /* ================= render: soma ================= */
+  function renderSoma(){
+    var st = state.soma;
+    if(!st.question) st.question = generateFor("soma");
+    var q = st.question;
+    var itemsA = repeat(q.a, function(){ return '<span class="item item--sm">'+q.emojiA+'</span>'; });
+    var itemsB = repeat(q.b, function(){ return '<span class="item item--sm">'+q.emojiB+'</span>'; });
+    var levels = [[1,"até 10"],[2,"até 24"]];
+    var pills = levels.map(function(pair){
+      var lvl = pair[0], label = pair[1];
+      return '<button class="pill '+(st.level===lvl?"pill--active":"")+'" data-action="select-level" data-activity="soma" data-level="'+lvl+'">'+label+'</button>';
+    }).join("");
+    var optionsHTML = q.options.map(function(v){
+      var hint = (q.wrongAttempts>=2 && v===q.sum) ? "hint-glow" : "";
+      return '<button class="option-btn btn--tomato '+hint+'" data-action="answer" data-activity="soma" data-value="'+v+'">'+v+'</button>';
+    }).join("");
+    return (
+      headerHTML("soma")+
+      '<div class="level-row">'+pills+'</div>'+
+      '<div class="body-pad">'+
+        '<p class="prompt">Quanto é ao todo?</p>'+
+        '<div class="soma-row">'+
+          '<div class="crate crate--sm">'+itemsA+'</div>'+
+          '<div class="op">+</div>'+
+          '<div class="crate crate--sm">'+itemsB+'</div>'+
+        '</div>'+
+        '<div class="options-row '+(q.locked?"locked":"")+'">'+optionsHTML+'</div>'+
+      '</div>'
+    );
+  }
+
+  /* ================= render: paridade ================= */
+  function renderParidade(){
+    var st = state.paridade;
+    if(!st.question) st.question = generateFor("paridade");
+    var q = st.question;
+    var coinsHTML = repeat(q.n, function(){ return '<span class="coin">🪙</span>'; });
+    var rangeBtns = [["small","1–10"],["big","11–30"]].map(function(pair){
+      var r = pair[0], label = pair[1];
+      return '<button class="pill '+(st.range===r?"pill--active":"")+'" data-action="select-range" data-activity="paridade" data-range="'+r+'">'+label+'</button>';
+    }).join("");
+    var correctVal = q.isEven ? "par" : "impar";
+    var hintPar = (q.wrongAttempts>=2 && correctVal==="par") ? "hint-glow" : "";
+    var hintImpar = (q.wrongAttempts>=2 && correctVal==="impar") ? "hint-glow" : "";
+    return (
+      headerHTML("paridade")+
+      '<div class="level-row">'+rangeBtns+'</div>'+
+      '<div class="body-pad">'+
+        '<p class="prompt">É PAR ou ÍMPAR?</p>'+
+        '<div class="coin-grid">'+coinsHTML+'</div>'+
+        '<div class="parity-row '+(q.locked?"locked":"")+'">'+
+          '<button class="parity-btn parity-btn--par '+hintPar+'" data-action="parity" data-value="par">'+
+            '<span class="parity-icon">🪙🪙</span><span>PAR</span>'+
+          '</button>'+
+          '<button class="parity-btn parity-btn--impar '+hintImpar+'" data-action="parity" data-value="impar">'+
+            '<span class="parity-icon">🪙</span><span>ÍMPAR</span>'+
+          '</button>'+
+        '</div>'+
+      '</div>'
+    );
+  }
+
+  /* ================= render: estrelas ================= */
+  function renderEstrelas(){
+    var p = state.progress;
+    var order = ["numeros","crescente","decrescente","soma","paridade"];
+    var rows = order.map(function(act){
+      var m = ACTIVITY_META[act];
+      return '<div class="star-row">'+
+        '<span class="star-row-icon">'+m.icon+'</span>'+
+        '<span class="star-row-label">'+m.label+'</span>'+
+        '<span class="star-row-count">'+(p[act]||0)+' ⭐</span>'+
+      '</div>';
+    }).join("");
+    var total = order.reduce(function(sum,act){ return sum + (p[act]||0); }, 0);
+    return (
+      headerHTML("estrelas")+
+      '<div class="body-pad">'+
+        '<div class="total-medal">🏅<br>'+total+'<br><span class="total-label">estrelas</span></div>'+
+        '<div class="stars-list">'+rows+'</div>'+
+      '</div>'
+    );
+  }
+
+  /* ================= main render dispatch ================= */
+  function render(){
+    var app = document.getElementById("app");
+    var html;
+    switch(state.screen){
+      case "home": html = renderHome(); break;
+      case "numeros": html = renderNumeros(); break;
+      case "crescente": html = renderCrescente(); break;
+      case "decrescente": html = renderDecrescente(); break;
+      case "soma": html = renderSoma(); break;
+      case "paridade": html = renderParidade(); break;
+      case "estrelas": html = renderEstrelas(); break;
+      default: html = renderHome();
+    }
+    app.innerHTML = html;
+  }
+
+  /* ================= interaction handlers ================= */
+  function handleAnswer(act, val, e){
+    var q = state[act].question;
+    if(!q || q.locked) return;
+    var correct = (act==="numeros") ? q.target : q.sum;
+    if(val === correct){
+      q.locked = true;
+      bumpProgress(act);
+      showBanner("success", pick(PRAISE));
+      celebrate(e.clientX, e.clientY);
+      playSuccess();
+      render();
+      setTimeout(function(){
+        state[act].question = generateFor(act);
+        if(state.screen === act) render();
+      }, 1100);
+    } else {
+      q.wrongAttempts = (q.wrongAttempts||0) + 1;
+      showBanner("retry", pick(ENCOURAGE));
+      playRetry();
+      render();
+    }
+  }
+
+  function handleTag(act, val, e){
+    var q = state[act].question;
+    if(!q || q.locked) return;
+    var expected = q.solution[q.doneCount];
+    if(val === expected){
+      q.doneCount++;
+      q.wrongAttempts = 0;
+      if(q.doneCount === q.solution.length){
+        q.locked = true;
+        bumpProgress(act);
+        showBanner("success", pick(PRAISE));
+        celebrate(e.clientX, e.clientY);
+        playSuccess();
+        render();
+        setTimeout(function(){
+          state[act].question = generateFor(act);
+          if(state.screen === act) render();
+        }, 1200);
+      } else {
+        playTick();
+        render();
+      }
+    } else {
+      q.wrongAttempts = (q.wrongAttempts||0) + 1;
+      showBanner("retry", pick(ENCOURAGE));
+      playRetry();
+      render();
+    }
+  }
+
+  function handleParity(val, e){
+    var q = state.paridade.question;
+    if(!q || q.locked) return;
+    var correctVal = q.isEven ? "par" : "impar";
+    if(val === correctVal){
+      q.locked = true;
+      bumpProgress("paridade");
+      showBanner("success", pick(PRAISE));
+      celebrate(e.clientX, e.clientY);
+      playSuccess();
+      render();
+      setTimeout(function(){
+        state.paridade.question = generateFor("paridade");
+        if(state.screen === "paridade") render();
+      }, 1100);
+    } else {
+      q.wrongAttempts = (q.wrongAttempts||0) + 1;
+      showBanner("retry", pick(ENCOURAGE));
+      playRetry();
+      render();
+    }
+  }
+
+  document.addEventListener("click", function(e){
+    var el = e.target.closest ? e.target.closest("[data-action]") : null;
+    if(!el) return;
+    var action = el.getAttribute("data-action");
+    ensureAudio();
+
+    if(action === "go-home"){
+      state.screen = "home"; render();
+    } else if(action === "go-activity"){
+      state.screen = el.getAttribute("data-activity"); render();
+    } else if(action === "select-level"){
+      var act1 = el.getAttribute("data-activity");
+      var lvl = Number(el.getAttribute("data-level"));
+      state[act1].level = lvl;
+      state[act1].question = generateFor(act1);
+      render();
+    } else if(action === "select-range"){
+      var act2 = el.getAttribute("data-activity");
+      var rng = el.getAttribute("data-range");
+      state[act2].range = rng;
+      state[act2].question = generateFor(act2);
+      render();
+    } else if(action === "answer"){
+      var act3 = el.getAttribute("data-activity");
+      var val3 = Number(el.getAttribute("data-value"));
+      handleAnswer(act3, val3, e);
+    } else if(action === "tag"){
+      var act4 = el.getAttribute("data-activity");
+      var val4 = Number(el.getAttribute("data-value"));
+      handleTag(act4, val4, e);
+    } else if(action === "parity"){
+      var val5 = el.getAttribute("data-value");
+      handleParity(val5, e);
+    } else if(action === "toggle-sound"){
+      state.sound = !state.sound; render();
+    } else if(action === "open-parent-info"){
+      document.getElementById("parent-modal").classList.add("open");
+    } else if(action === "close-parent-info"){
+      document.getElementById("parent-modal").classList.remove("open");
+    }
+  });
+
+  /* ================= init ================= */
+  render();
+})();
+</script>
+</body>
+</html>
